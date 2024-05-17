@@ -3,38 +3,69 @@ package me.sean.minesweeper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Game implements Observable{
+/**
+ * This class represents the Minesweeper game, a player is able to pick or flag tiles. If the player picks a mine, the player loses
+ */
+public class Game implements Observable {
 
     private final List<Observer> observers;
     private final Grid grid;
-    private final int width;
-    private final int height;
-    private final int mines;
-    private GameState state;
+    private GameState gameState;
     
 
-
+    /**
+     * Creates a new minesweeper game
+     * @param width width of the board
+     * @param height height of the board
+     * @param mines the number of mines on the board
+     */
     public Game(int width, int height, int mines) {
         this.observers = new ArrayList<>();
         this.grid = new Grid(width, height, mines);
-        this.width = width;
-        this.height = height;
-        this.mines = mines;
-        this.state = GameState.ONGOING;
+        this.gameState = GameState.ONGOING;
     }
 
-    private void pick(int x, int y) {
-        //TODO create a way to pick any tile, making it non hidden, however not tiles that are flagged
-        return;
+    /**
+     * Picks and reveals a tile on the board
+     * @param x x coordinate of the tile
+     * @param y y coordinate of the tile
+     */
+    public void pick(int x, int y) {
+        if(this.gameState == GameState.WIN || this.gameState == GameState.LOSS) return;
+        this.grid.pickTile(x, y);
+        this.gameState = this.grid.evaluateBoard();
+        notifyObservers("Picked");
     }
 
-    private Icon getIcon(int x, int y) {
-        //TODO get the icon of any tile on the grid
-        return null;
+    /**
+     * Gets the value a player should see on a tile
+     * @param x x coordinate of the tile
+     * @param y y coordinate of the tile
+     * @return the value a player will see of that tile on the baord
+     */
+    public Value getIcon(int x, int y) {
+        Tile tile = grid.getTile(x, y);
+        if(tile.getValue() == Value.MINE && this.gameState == GameState.LOSS && tile.isHidden()) {
+            return Value.MINE;
+        } else if(tile.isFlagged()) {
+            return Value.FLAG;
+        } else if(tile.isHidden()) {
+            return Value.BLANK;
+        } else if(tile.getValue() == Value.MINE) {
+            return Value.RED_MINE;
+        }
+        return tile.getValue();
     }
 
-    private void flag(int x, int y) {
-        //TODO be able to flag any any hidden tile
+    /**
+     * Flags a tile on the board
+     * @param x x coordinate of the tile
+     * @param y y coordinate of the tile
+     */
+    public void flag(int x, int y) {
+        if(this.gameState == GameState.WIN || this.gameState == GameState.LOSS) return;
+        this.grid.flagTile(x, y);
+        notifyObservers("Flag Set");
     }
 
     @Override
@@ -47,6 +78,11 @@ public class Game implements Observable{
         for(Observer o : this.observers) {
             o.update(message);
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.grid.toString();
     }
     
 }

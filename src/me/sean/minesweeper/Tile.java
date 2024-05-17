@@ -50,7 +50,7 @@ public class Tile {
      * Sets the hidden parameter to false if the tile is not flagged
      */
     public void reveal() {
-        if(isFlagged) return;
+        if(this.isFlagged) return;
         this.isHidden = false;
     }
 
@@ -59,7 +59,7 @@ public class Tile {
      * @return whether or not the tile is flagged or not
      */
     public boolean isFlagged() {
-        return isFlagged;
+        return this.isFlagged;
     }
 
     /**

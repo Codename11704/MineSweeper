@@ -120,16 +120,76 @@ public class Grid {
         this.grid[y][x].setValue(Value.getValFromInt(mines));
     }
 
-    //TODO differentiate between getting a tile and picking a tile, determine how much access the caller has to a TILE (only get value or get tile)
+    /**
+     * reveals a tile and all surrounding tiles if the tile is not touching any mines
+     * @param x the x coordinate of the tile
+     * @param y the y coordinate of the tile
+     * @return true if the tile was revealed, false if it was already revealed or flagged
+     */
+    public boolean pickTile(int x, int y) {
+        if(!this.grid[y][x].isHidden()) {
+            return false;
+        }
+        if(this.grid[y][x].isFlagged()) {
+            return false;
+        }
+        this.grid[y][x].reveal();
+        if(this.grid[y][x].getValue() == Value.ZERO) {
+            for(int i = -1; i <= 1; i++) {
+                // Check if you're on the board
+                if(y+i < 0 || y+i >= height) continue;
+                for(int j = -1; j <= 1; j++) {
+                    if(x+j < 0 || x+j >= width) continue;
+                    // Do not count the space you're picking
+                    if(j == 0 && i == 0) continue;
+                    // pick all surrounding tiles
+                    pickTile(x+j, y+i);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Sets a tile to flagged
+     * @param x the x coordinate of the tile
+     * @param y the y coordinate of the tile
+     * @return true if the flag was successfully flagged, false otherwise
+     */
+    public boolean flagTile(int x, int y) {
+        return this.grid[y][x].flag();
+    }
 
     /**
      * Gets a tile off of it's x and y coordinates
      * @param x the x coordinate of the tile
      * @param y the y coordinate of the tile
-     * @return
+     * @return the tile at the given coordinate
      */
     public Tile getTile(int x, int y) {
         return this.grid[y][x];
+    }
+
+    /**
+     * Evaluates whether the board makes win conditions or lose conditions
+     * @return Win if the player has revealed all non-mine tiles, Loss if the player has revealed a mine, Ongoing otherwise
+     */
+    public GameState evaluateBoard() {
+        boolean unOpened = false;
+        for(Tile[] row : this.grid) {
+            for(Tile tile : row) {
+                if(tile.isHidden() && tile.getValue() != Value.MINE) {
+                    unOpened = true;
+                }  
+                if(!tile.isHidden() && tile.getValue() == Value.MINE) {
+                    return GameState.LOSS;
+                }
+            }
+        }
+        if(unOpened) {
+            return GameState.ONGOING;
+        }
+        return GameState.WIN;
     }
 
     @Override
